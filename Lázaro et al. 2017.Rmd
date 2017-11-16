@@ -1,0 +1,75 @@
+---
+title: "Lázaro et al 2017"
+author: "Kevin Middleton"
+date: "11/16/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+
+Sys.setenv(TZ = "America/Chicago")
+```
+
+# Introduction
+
+Reanalysis of data from "Profound reversible seasonal changes of individual skull size in a mammal" by Lázaro and coauthors (https://doi.org/10.1016/j.cub.2017.08.055).
+
+Load data and clean up variable names.
+
+```{r}
+M <- read_csv("Lázaro et al. 2017.csv")
+M <- M %>%
+  mutate(ID = factor(`individual id`),
+         sex = factor(sex),
+         recaptured = factor(recaptured),
+         date = mdy(date)) %>% 
+  rename(SKL = `SKL (mm)`,
+         BCW = `BCW (mm)`,
+         BCH = `BCH (mm)`,
+         tooth_row = `tooth row (mm)`) %>% 
+  mutate(BCH_std = BCH / tooth_row)
+```
+
+# Tooth Row
+
+```{r}
+M %>% ggplot(aes(x = date, y = tooth_row, color = ID)) +
+  geom_path() +
+  geom_point(size = 3) +
+  geom_smooth(aes(group = 1), method = "loess") +
+  theme(legend.position = "none")
+
+M %>% 
+  filter(recaptured == "y") %>% 
+  ggplot(aes(x = date, y = tooth_row, color = ID)) +
+  geom_path() +
+  geom_point(size = 3) +
+  geom_smooth(aes(group = 1), method = "loess") +
+  theme(legend.position = "none")
+
+M %>% 
+  filter(recaptured == "y") %>% 
+  filter(!is.na(sex)) %>% 
+  ggplot(aes(x = date, y = tooth_row, color = ID)) +
+  geom_path() +
+  geom_point(size = 3) +
+  geom_smooth(aes(group = 1), method = "loess") +
+  theme(legend.position = "none") +
+  facet_grid(sex ~ .)
+```
+
+# Relative Braincase Height
+
+```{r}
+M %>% 
+  ggplot(aes(x = date, y = BCH_std, color = ID)) +
+  geom_path() +
+  geom_point(size = 3) +
+  geom_smooth(aes(group = 1), method = "loess") +
+  theme(legend.position = "none")
+```
+
